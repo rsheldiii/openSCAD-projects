@@ -2,33 +2,29 @@
 
 // globals
 
-left = true;
+right = true;
 cols = 5;
-ylimit = 4; //ylimit currently rows
+rows = 4;
 
 // constants
+unit = 19.05;
+// row rotation angle. determines how much each row rotates compared to the last
+alpha = 15;
+// column rotation angle. you guessed it
+beta = 6;
 
-lkey = 19.05;
+// I assume, the height of a key
+key_height = 12.5;
+hole_height = 7;
+plate_height = 5.75;
 
-alpha = 360 / 24;
-beta = 360 / 72;
-
-key_height = 127/10;
-hole_height = 127/18;
-plate_height = 254/45;
-
-tw = 13.969999999999999;// Top width
-smh = 0.98044;// Side margin height
-pw = 0.8128;// Peg width
-ph = 3.5001199999999995;// Peg height
-pgh = 5.00888;// Peg gap height
-
-keyswitch_height = smh + ph + pgh + ph + smh;
-keyswitch_width = pw + tw + pw;
+// these are measurements for the actual keyswitch plates - the squares we position to accept a keyswitch
+keyswitch_height = 19;
+keyswitch_width = 19;
 
 pillar_height = hole_height + plate_height / 2;
-pillar_depth = keyswitch_height + 127/30;
-pillar_width = keyswitch_width + 127/45;
+pillar_depth = keyswitch_height;
+pillar_width = keyswitch_width;
 
 full_height = pillar_height + key_height;
 
@@ -41,27 +37,41 @@ column_radius = (pillar_width / 2) / (sin(beta / 2)) + full_height;
 column_insets = [
    0,
    0,
-   254/90,
+   -254/90,
    0,
-  -254/90,
-  -254/90,
-  -254/90,
-  -254/90,
-  -254/90
+  254/90,
+  254/90,
+  254/90,
+  254/90,
+  254/90
 ];
 
-module key_place(column, row){
-  //column_angle = beta * (5 - column);
-  column_angle = 
-    (column == cols) ? 
-    (beta * -0.3) : // -2.2 for right hand, 0.3 for left
-    (beta * (5 - column));
+// multiple use functions
 
+module row_placed_shape(row,row_radius){
+    translate([0, 0, row_radius])
+    rotate([alpha * (row), 0, 0])
+    translate([0, 0, -row_radius])
+
+    children();
+}
+
+module column_placed_shape(column, column_radius, column_inset){
+  //column_angle = beta * (5 - column);
+  column_angle = (beta * (column - 5) + (column == cols ? 2 : 0));
+
+  translate([0, 0, column_radius])
+  rotate([0, column_angle, 0])
+  translate([0, 0, -column_radius])
+  translate([0,0,column_inset])
+  children();
+}
+
+module key_place(column, row){
   column_inset = column_insets[column];
 
-
-  column_placed_shape(column_radius, column_angle, column_inset){
-    row_placed_shape(row, row_radius){
+  column_placed_shape(column, column_radius, column_inset){
+    row_placed_shape(row - 2, row_radius){
         children();
     }
   }
@@ -69,26 +79,7 @@ module key_place(column, row){
 
 //end key place
 
-
-// multiple use functions
-
-module row_placed_shape(row,row_radius){
-    translate([0, 0, -row_radius])
-    rotate([(alpha * (2 - row)), 0, 0])
-    translate([0, 0, row_radius])
-
-    children();
-}
-
-module column_placed_shape(column_radius, column_angle, column_inset){
-  translate([0, 0, -column_radius])
-  rotate([0, column_angle, 0])
-  translate([0, 0, column_radius])
-
-  translate([0,0,column_inset])
-  children();
-}
-
+// bounding box. also helps shape the case
 module limits(){
   difference(){
     cube([1000,1000,1000], center = true);
@@ -97,46 +88,20 @@ module limits(){
 }
 
 module switch_cutout(units=1){
-    difference(){
-        x = 22;
-        y = 24.8 - lkey;
-        cube([x*units,lkey + y,3], center = true);
-        //cube([19,19,19], center = true); // for making sure you have clearance
-        cube([14.05,14.05,14], center = true);
-    }
+  difference(){
+    cube([unit*units,unit,3], center = true);
+    cube([14.05,14.05,14], center = true);
+  }
 }
 
 module hand_array_plate(){
-
-
-  //these are separate in order to make sure the switch cutouts clip through everything and not just their respective cube
-  difference(){
-    translate([-40,0,0])
-    for (column = [0 : cols]){//cols]){
-      for (row = [0 : ylimit]){ // TODO 0
-        key_place(column,row){
-          if (column == cols){
-            switch_cutout(1.5);
-            //translate([0,0,-7.5]) cube([28,18,15], center = true);
-          }
-          else if (column != 0 || row != ylimit){
-            switch_cutout(1);
-            //translate([0,0,-7.5]) cube([18,18,15], center = true);
-          }
-        }
-      }
-    }
-
-    translate([-40,0,0])
-    for (column = [0 : cols]){
-      for (row = [0 : ylimit]){
-        key_place(column,row){
-          if (column == cols){
-            translate([0,0,-9]) cube([28,18,15], center = true);
-          }
-          else if (column != 0 || row != ylimit){
-            translate([0,0,-9]) cube([18,18,15], center = true);
-          }
+  for (column = [0 : cols]){
+    for (row = [0 : rows]){
+      key_place(column,row){
+        if (column == cols){
+          switch_cutout(1.5);
+        } else if (!(column == 0 && row == 0)){
+          switch_cutout(1);
         }
       }
     }
@@ -144,15 +109,13 @@ module hand_array_plate(){
 }
 
 module hand_array_base(){
-
-  translate([-40,0,0])
-  for (column = [0 : cols]){//cols]){
-    for (row = [0 : ylimit]){
+  for (column = [0 : cols]){
+    for (row = [0 : rows]){
       key_place(column,row){
         if (column == cols){
           switch_pillar(1.5);
         }
-        else if (column != 0 || row != ylimit){
+        else if (column != 0 || row != rows){
           switch_pillar(1);
         }
       }
@@ -160,6 +123,7 @@ module hand_array_base(){
   }
 }
 
+//large pillar-like structure put underneath each switch to make a base
 module switch_pillar(units=1, scle = 3, extrax = 2.95, extray = 5.75){
   z = 100;
   linear_extrude(height = z, scale = scle){
@@ -184,84 +148,47 @@ module clipped_hand_base(z){
   }
 }
 
+module thumb_array_plate(){
+  translate([25,27,44]){
+    rotate([20,15,-15]) {
+      key_place(0, 0.5) {
+        rotate([0,0,90]) switch_cutout(2);
+      }
 
+      key_place(-1, 0.5) {
+        rotate([0,0,90])
+        switch_cutout(2);
+      }
 
+      key_place(-2, 0) {
+        switch_cutout(1);
+      }
 
-//thumb functions
-
-module thumb_switch_cutout(units=1){ // no extra
-    difference(){
-        cube([lkey*units, lkey,3], center = true);
-        cube([14,14,14], center = true);
-    }
-}
-
-
-module thumb_array(inset=0){
-  translate([0,0,-15])
-  rotate([0, 0, 45])
-  translate([81,-8.5,0])
-  rotate([0,-25,0]){
-    translate([19.05 * 0,0,0]) children(0);
-    translate([19.05 * 1,0,0]) children(1);
-    translate([19.05 * 2,0,0]) children(2);
-  }
-}
-
-module thumb_array_plate(unit){
-    thumb_array(10){
-    rotate([0,0,90]) union(){
-      translate([unit/2,0,0]) thumb_switch_cutout(2);
-      translate([-unit,0,0]) thumb_switch_cutout(1);
-    }
-    rotate([0,0,90]) union(){
-      translate([unit/2,0,0]) thumb_switch_cutout(2);
-      translate([-unit,0,0]) thumb_switch_cutout(1);
-    }
-    rotate([0,0,90]) union(){
-      translate([unit,0,0]) thumb_switch_cutout(1);
-      translate([0,0,0]) thumb_switch_cutout(1);
-      translate([-unit,0,0]) thumb_switch_cutout(1);
+      key_place(-2, 1) {
+        switch_cutout(1);
+      }
     }
   }
 }
 
-
-module clipped_thumb_base(z,inset = 0){
-  difference(){
-    thumb_array(inset){
-      rotate([0,0,90])
-      switch_pillar(3,1.5, 0, 0);
-
-      rotate([0,0,90])
-      switch_pillar(3,1.5, 0, 0);
-
-      rotate([0,0,90])
-      switch_pillar(3,1.5, 0, 0);
-    }
-    translate([0,0,-20]) limits(){
-      cube([1705,1200,z], center = true);
-    }
-  }
-}
-
-module inside_clipped_thumb_base(z, inset=0){
-  difference(){
-    thumb_array(inset){
-      z = 510 ;
-      thickness = 1.5;
-
-      translate([thickness/2,0,z/2])
-      cube([lkey+1,lkey*3-thickness*3,z], center = true);
-
-      translate([0,0,z/2])
-      cube([lkey,lkey*3-thickness*3,z], center = true);
-
-      translate([-thickness/2,0,z/2])
-      cube([lkey - thickness,lkey*3-thickness*3,z], center = true);
-    }
-    translate([0,0,-20]) limits(){
-      cube([1705,1200,z], center = true);
+module thumb_place(column, row){
+  translate([0, 0, row_radius]) {
+    rotate([alpha * row, 0, 0]){
+      translate([0, 0, -row_radius]){
+        translate([0, 0, column_radius]) {
+          rotate([0, column * beta, 0]){
+            translate([0, 0, -column_radius]){
+              translate([keyswitch_width + 3, 0, 0]){
+                rotate([-15, -15, -11.25]) {
+                  translate([52, -45, 40]){
+                    children();
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
@@ -271,10 +198,8 @@ module inside_clipped_thumb_base(z, inset=0){
 // actual functions
 //TODO gonna have to break this guy out for each side
 module cave_plate(){
-
-  unit = 19.05;
   hand_array_plate();
-  thumb_array_plate(unit);
+  thumb_array_plate();
 }
 
 module trss_hole(){
@@ -290,53 +215,37 @@ module usb_hole(){
 }
 
 module total_base(){
-  difference(){
+  /* difference(){
+
+    // get rid of base for now
     clipped_hand_base(60);
-    
-    translate([0,0,-1])
-    scale([.95,.91,1]){
-      clipped_hand_base(62);
+    translate([0,0,-1]){
+      scale([.95,.91,1]){
+        clipped_hand_base(62);
+      }
     }
 
-    //to make room for the thumb
-    clipped_thumb_base(60, 10);
     trss_hole();
     usb_hole(); // uncomment on left side
   }
 
   difference(){
-    clipped_thumb_base(60, 10);
-    inside_clipped_thumb_base(60, 10);
     scale([.95,.91,1]){
       clipped_hand_base(62);
     }
-  }
+  } */
 }
 
 // end actual functions
 
 // output
 
-module left(){
-  rotate([0,180,0]){
+if (right) {
+  mirror([1,0,0]) {
     cave_plate();
     total_base();
   }
-}
-
-module right(){
-  rotate([0,180,0])
-  mirror([1,0,0]){
+} else {
   cave_plate();
   total_base();
-  }
-}
-
-if (left) {
-  intersection(){
-    //translate([-75,75,0]) cube([100,175,1000],center = true);
-    left();
-  }
-} else {
-  right();
 }
