@@ -13,29 +13,28 @@ include <src/key_profiles.scad>
 include <src/key_types.scad>
 include <src/key_transformations.scad>
 
-// basic
-cherry() key();
-
-translate_u(1) sa_row(2) cherry() key("q");
-translate_u(2) oem_row(2) alps() key("q", inset=true);
-translate_u(3) dsa_row() flat_support() rounded_cherry() key();
-
-translate_u(1, 1) sa_row(3) lshift() cherry() key(inset=true) {
-  sphere(1);
-};
-
-translate_u(3, 2) sa_row(3) bar_support() spacebar() cherry() key("space bar");
-
-translate_u(3,1) sa_row(3) 2u() cherry() {
-  $key_shape_type = "oblong";
-  $support_type = false;
-  $inverted_dish = true;
-  key();
+module translate_u(x=0, y=0, z=0){
+  translate([x * unit, y*unit, z*unit]) children();
 }
 
+// row 5 is commonly the top row, for whatever reason
+key_profiles = ["dcs", "oem", "sa", "g20", "dsa"];
 
-/* // g20 / dsa sculpting test
-for (x = [1:5]) {
-  translate_u(0, x) dsa_row(x) cherry() key();
-  translate_u(1, x) g20_row(x) cherry() key();
-} */
+module one_single_key(profile, row, unsculpted) {
+   key_profile(profile, unsculpted ? 3 : row) cherry() key();
+}
+
+module one_row_profile(profile, unsculpted = false) {
+  rows = [5, 1, 2, 3, 4];
+  for(row = [0:len(rows)-1]) {
+    translate_u(0, -row) one_single_key(profile, rows[row], unsculpted);
+  }
+}
+
+for (p = [0:len(key_profiles)-1]) {
+  translate_u(p){
+    /* one_row_profile(key_profiles[p]); */
+  }
+}
+
+/* translate_u(0, 0) one_row_profile("oem"); */
