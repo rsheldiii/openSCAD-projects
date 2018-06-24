@@ -1,5 +1,6 @@
 module dsa_row(n=3) {
-    depth_raisers = [0, 3.5, 1, 0, 1, 3];
+  $key_shape_type = "sculpted_square";
+  depth_raisers = [0, 3.5, 1, 0, 1, 3];
   $bottom_key_width = 18.24; // 18.4;
   $bottom_key_height = 18.24; // 18.4;
   $width_difference = 6; // 5.7;

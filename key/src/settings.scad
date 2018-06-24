@@ -75,8 +75,6 @@ $dish_overdraw_height = 0;
 // how many slices will be made, to approximate curves on corners. Leave at 1 if you are not curving corners
 // if you're doing fancy bowed keycap sides, this controls how many slices you take
 $height_slices = 1;
-// this enables some fancy and currently hardcoded logic to bow the sides and corners of SA keycaps
-$enable_side_sculpting = false;
 
 //minkowski radius. radius of sphere used in minkowski sum for minkowski_key function. 1.75 for G20
 $minkowski_radius = .33;
