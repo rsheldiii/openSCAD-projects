@@ -1,6 +1,7 @@
 // key profile definitions
 
-// unlike the other files with their own dedicated folders, this one doesn't need a selector. it just collects all the functions
+// unlike the other files with their own dedicated folders, this one doesn't
+// need a selector. I wrote one anyways for customizer support though
 include <key_profiles/dcs.scad>
 include <key_profiles/oem.scad>
 include <key_profiles/dsa.scad>
@@ -19,5 +20,9 @@ module key_profile(key_profile_type, row) {
     sa_row(row) children();
   } else if (key_profile_type == "g20") {
     g20_row(row) children();
+  } else if (key_profile_type == "disable") {
+    children();
+  } else {
+    echo("Warning: unsupported key_profile_type");
   }
 }

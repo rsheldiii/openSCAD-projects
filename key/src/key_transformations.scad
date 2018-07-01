@@ -7,9 +7,15 @@ module translate_u(x=0, y=0, z=0){
   translate([x * unit, y*unit, z*unit]) children();
 }
 
-module brimmed(height = 0.2) {
-  $has_brim = true;
-  $brim_height = height;
+module brimmed_stem_support(height = 0.4) {
+  $stem_support_type = "brim";
+  $stem_support_height = height;
+  children();
+}
+
+module tined_stem_support(height = 0.4) {
+  $stem_support_type = "tines";
+  $stem_support_height = height;
   children();
 }
 
@@ -49,7 +55,7 @@ module stabilized(mm=12, vertical = false, type="cherry") {
 }
 
 module dishless() {
-  $dish_type = "no dish";
+  $dish_type = "disable";
   children();
 }
 
@@ -64,7 +70,7 @@ module filled() {
 }
 
 module blank() {
-  $stem_type = "blank";
+  $stem_type = "disable";
   children();
 }
 
@@ -82,7 +88,13 @@ module alps(slop) {
 
 module rounded_cherry(slop) {
   $stem_slop = slop ? slop : $stem_slop;
-  $stem_type = "cherry_rounded";
+  $stem_type = "rounded_cherry";
+  children();
+}
+
+module box_cherry(slop) {
+  $stem_slop = slop ? slop : $stem_slop;
+  $stem_type = "box_cherry";
   children();
 }
 
@@ -111,4 +123,15 @@ module bump(depth=undef) {
     $key_bump = true;
     $key_bump_depth = depth == undef ? $key_bump_depth : depth;
     children();
+}
+
+module one_single_key(profile, row, unsculpted) {
+   key_profile(profile, unsculpted ? 3 : row) key();
+}
+
+module one_row_profile(profile, unsculpted = false) {
+  rows = [5, 1, 2, 3, 4];
+  for(row = [0:len(rows)-1]) {
+    translate_u(0, -row) one_single_key(profile, rows[row], unsculpted);
+  }
 }
